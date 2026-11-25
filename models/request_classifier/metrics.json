@@ -1,0 +1,372 @@
+{
+  "research_question": "Can supervised machine-learning models detect malicious HTTP request parameters (SQLi, XSS, command injection, path traversal), and which of Logistic Regression, SVM and Random Forest performs best?",
+  "dataset": "HTTP Params Dataset (Morzeux) - benign values from CSIC 2010; MIT licence",
+  "dataset_url": "https://github.com/Morzeux/HttpParamsDataset",
+  "is_real_dataset": true,
+  "features": [
+    "length",
+    "n_digits",
+    "n_letters",
+    "n_specials",
+    "special_ratio",
+    "n_spaces",
+    "n_single_quote",
+    "n_double_quote",
+    "n_angle",
+    "n_equals",
+    "n_percent",
+    "n_semicolon",
+    "sql_kw",
+    "xss_kw",
+    "cmd_kw",
+    "traversal",
+    "entropy",
+    "non_ascii"
+  ],
+  "data_quality": {
+    "rows_raw": 31067,
+    "duplicate_payloads": 0,
+    "conflicting_rows": 34,
+    "duplicate_feature_rows": 15119,
+    "rows_clean": 15914,
+    "class_counts_raw": {
+      "normal": 19304,
+      "malicious": 11763
+    },
+    "class_counts_clean": {
+      "normal": 4470,
+      "malicious": 11444
+    }
+  },
+  "eda": {
+    "attack_types_clean": {
+      "sqli": 10569,
+      "norm": 4470,
+      "xss": 529,
+      "path-traversal": 273,
+      "cmdi": 73
+    },
+    "descriptive_stats": {
+      "length": {
+        "mean": 71.143,
+        "median": 51.0,
+        "mode": 20.0,
+        "std": 65.37,
+        "mean_normal": 21.231,
+        "mean_malicious": 90.639
+      },
+      "n_specials": {
+        "mean": 11.069,
+        "median": 7.0,
+        "mode": 0.0,
+        "std": 13.846,
+        "mean_normal": 0.323,
+        "mean_malicious": 15.267
+      },
+      "special_ratio": {
+        "mean": 0.129,
+        "median": 0.126,
+        "mode": 0.0,
+        "std": 0.101,
+        "mean_normal": 0.015,
+        "mean_malicious": 0.173
+      },
+      "sql_kw": {
+        "mean": 2.366,
+        "median": 2.0,
+        "mode": 0.0,
+        "std": 2.794,
+        "mean_normal": 0.001,
+        "mean_malicious": 3.29
+      },
+      "entropy": {
+        "mean": 4.027,
+        "median": 4.144,
+        "mode": 3.684,
+        "std": 0.645,
+        "mean_normal": 3.476,
+        "mean_malicious": 4.242
+      },
+      "n_single_quote": {
+        "mean": 0.85,
+        "median": 0.0,
+        "mode": 0.0,
+        "std": 1.509,
+        "mean_normal": 0.008,
+        "mean_malicious": 1.179
+      }
+    }
+  },
+  "split": {
+    "train": 11139,
+    "test": 4775,
+    "test_fraction": 0.3,
+    "stratified": true,
+    "seed": 42,
+    "cv_folds": 5
+  },
+  "models": {
+    "logistic_regression": {
+      "label": "Logistic Regression",
+      "why": "Simplest linear classifier: the baseline every other model must beat. Fast, and its weights are easy to interpret.",
+      "search_space": {
+        "C": [
+          "0.01",
+          "0.1",
+          "1",
+          "10",
+          "100",
+          "1000",
+          "10000",
+          "100000"
+        ],
+        "class_weight": [
+          "None",
+          "balanced"
+        ]
+      },
+      "combinations_tried": 16,
+      "best_params": {
+        "C": 10000,
+        "class_weight": "None"
+      },
+      "edge_check": {
+        "at_edge": [],
+        "natural_limit": []
+      },
+      "param_notes": {
+        "C": "Inverse regularisation strength. Small C = simpler model (less over-fitting), large C = fits the training data more closely. Searched 0.01 to 100,000.",
+        "class_weight": "'balanced' gives the smaller class more weight. Tested because the cleaned data is 72% malicious / 28% normal.",
+        "max_iter": "2000 (fixed) so the optimiser always converges.",
+        "StandardScaler": "Features are scaled to mean 0 / std 1 first, because length (~100) and ratios (0-1) live on very different scales."
+      },
+      "search_seconds": 2.6,
+      "fit_seconds": 0.03,
+      "default_test": {
+        "accuracy": 0.9931,
+        "precision": 0.9985,
+        "recall": 0.9918,
+        "f1": 0.9952,
+        "roc_auc": 0.9996,
+        "confusion_matrix": {
+          "tn": 1336,
+          "fp": 5,
+          "fn": 28,
+          "tp": 3406
+        }
+      },
+      "cv": {
+        "accuracy": {
+          "mean": 0.9966,
+          "std": 0.0008
+        },
+        "precision": {
+          "mean": 0.9985,
+          "std": 0.0009
+        },
+        "recall": {
+          "mean": 0.9968,
+          "std": 0.001
+        },
+        "f1": {
+          "mean": 0.9976,
+          "std": 0.0006
+        },
+        "roc_auc": {
+          "mean": 0.9999,
+          "std": 0.0001
+        }
+      },
+      "test": {
+        "accuracy": 0.9962,
+        "precision": 0.9991,
+        "recall": 0.9956,
+        "f1": 0.9974,
+        "roc_auc": 0.9998,
+        "confusion_matrix": {
+          "tn": 1338,
+          "fp": 3,
+          "fn": 15,
+          "tp": 3419
+        }
+      }
+    },
+    "svm": {
+      "label": "SVM (RBF kernel)",
+      "why": "Support Vector Machines are among the most used algorithms in web-attack detection papers. The RBF kernel draws a non-linear boundary between normal and malicious.",
+      "search_space": {
+        "C": [
+          "0.1",
+          "1",
+          "10",
+          "100",
+          "1000"
+        ],
+        "gamma": [
+          "scale",
+          "0.01",
+          "0.1",
+          "1",
+          "10"
+        ]
+      },
+      "combinations_tried": 25,
+      "best_params": {
+        "C": 100,
+        "gamma": 1
+      },
+      "edge_check": {
+        "at_edge": [],
+        "natural_limit": []
+      },
+      "param_notes": {
+        "kernel": "'rbf' (fixed): allows a curved decision boundary.",
+        "C": "Penalty for misclassified training points. Large C = fewer training errors but a risk of over-fitting. Searched 0.1 to 1000.",
+        "gamma": "How far the influence of one training point reaches. 'scale' = 1/(n_features*var). Searched 'scale', 0.01, 0.1, 1, 10.",
+        "StandardScaler": "Required: SVM uses distances, so unscaled features would dominate."
+      },
+      "search_seconds": 24.6,
+      "fit_seconds": 0.76,
+      "default_test": {
+        "accuracy": 0.9935,
+        "precision": 1.0,
+        "recall": 0.991,
+        "f1": 0.9955,
+        "roc_auc": 0.9995,
+        "confusion_matrix": {
+          "tn": 1341,
+          "fp": 0,
+          "fn": 31,
+          "tp": 3403
+        }
+      },
+      "cv": {
+        "accuracy": {
+          "mean": 0.9977,
+          "std": 0.0007
+        },
+        "precision": {
+          "mean": 0.9991,
+          "std": 0.0005
+        },
+        "recall": {
+          "mean": 0.9976,
+          "std": 0.0009
+        },
+        "f1": {
+          "mean": 0.9984,
+          "std": 0.0005
+        },
+        "roc_auc": {
+          "mean": 0.9991,
+          "std": 0.0008
+        }
+      },
+      "test": {
+        "accuracy": 0.9977,
+        "precision": 0.9994,
+        "recall": 0.9974,
+        "f1": 0.9984,
+        "roc_auc": 0.9988,
+        "confusion_matrix": {
+          "tn": 1339,
+          "fp": 2,
+          "fn": 9,
+          "tp": 3425
+        }
+      }
+    },
+    "random_forest": {
+      "label": "Random Forest",
+      "why": "Many decision trees vote together. Handles non-linear patterns, needs no scaling and resists over-fitting.",
+      "search_space": {
+        "n_estimators": [
+          "100",
+          "200",
+          "400"
+        ],
+        "max_depth": [
+          "8",
+          "16",
+          "None"
+        ],
+        "min_samples_leaf": [
+          "1",
+          "3"
+        ]
+      },
+      "combinations_tried": 18,
+      "best_params": {
+        "max_depth": "None",
+        "min_samples_leaf": 1,
+        "n_estimators": 200
+      },
+      "edge_check": {
+        "at_edge": [],
+        "natural_limit": [
+          "max_depth",
+          "min_samples_leaf"
+        ]
+      },
+      "param_notes": {
+        "n_estimators": "Number of trees. More trees = more stable votes, slower. Searched 100/200/400.",
+        "max_depth": "Maximum depth of each tree. Limits how specific a tree can get (None = no limit, the natural upper end). Searched 8/16/None.",
+        "min_samples_leaf": "Minimum rows in a leaf (1 is the smallest possible). 3 smooths the trees and reduces over-fitting. Searched 1/3.",
+        "scaling": "Not needed: trees split on thresholds, so feature scale does not matter."
+      },
+      "search_seconds": 12.6,
+      "fit_seconds": 0.72,
+      "default_test": {
+        "accuracy": 0.9966,
+        "precision": 0.9994,
+        "recall": 0.9959,
+        "f1": 0.9977,
+        "roc_auc": 0.9996,
+        "confusion_matrix": {
+          "tn": 1339,
+          "fp": 2,
+          "fn": 14,
+          "tp": 3420
+        }
+      },
+      "cv": {
+        "accuracy": {
+          "mean": 0.996,
+          "std": 0.0007
+        },
+        "precision": {
+          "mean": 0.9987,
+          "std": 0.0004
+        },
+        "recall": {
+          "mean": 0.9958,
+          "std": 0.0013
+        },
+        "f1": {
+          "mean": 0.9972,
+          "std": 0.0005
+        },
+        "roc_auc": {
+          "mean": 0.9999,
+          "std": 0.0001
+        }
+      },
+      "test": {
+        "accuracy": 0.9966,
+        "precision": 0.9994,
+        "recall": 0.9959,
+        "f1": 0.9977,
+        "roc_auc": 0.9996,
+        "confusion_matrix": {
+          "tn": 1339,
+          "fp": 2,
+          "fn": 14,
+          "tp": 3420
+        }
+      }
+    }
+  },
+  "best_model": "svm",
+  "best_model_label": "SVM (RBF kernel)",
+  "selection_rule": "highest 5-fold cross-validation F1 on the training set (tie-break: ROC-AUC)"
+}

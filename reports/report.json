@@ -1,0 +1,532 @@
+{
+  "generated_at": "2026-11-22 13:09:59",
+  "engine": "rule-based",
+  "targets": [
+    "bank",
+    "blog",
+    "files",
+    "clean"
+  ],
+  "results": {
+    "bank": {
+      "target": "http://127.0.0.1:5001",
+      "recon": {
+        "endpoints": [
+          {
+            "path": "/",
+            "method": "GET",
+            "params": [],
+            "source": "crawl",
+            "requires_auth": false,
+            "status": 200
+          },
+          {
+            "path": "/accounts",
+            "method": "GET",
+            "params": [
+              "holder"
+            ],
+            "source": "crawl",
+            "requires_auth": false,
+            "status": 200
+          },
+          {
+            "path": "/login",
+            "method": "GET",
+            "params": [],
+            "source": "crawl",
+            "requires_auth": false,
+            "status": 200
+          },
+          {
+            "path": "/login",
+            "method": "POST",
+            "params": [
+              "password",
+              "username"
+            ],
+            "source": "form",
+            "requires_auth": false,
+            "status": 200
+          }
+        ],
+        "hidden_paths": [],
+        "server": "Werkzeug/3.1.9 Python/3.12.3"
+      },
+      "findings": [
+        {
+          "id": "F02",
+          "vuln_type": "sqli_auth_bypass",
+          "title": "SQL injection in login form (authentication bypass)",
+          "severity": "critical",
+          "cvss": 9.8,
+          "cwe": "CWE-89",
+          "owasp": "A03:2021 Injection",
+          "path": "/login",
+          "method": "POST",
+          "param": "username",
+          "payload": "' OR 1=1 --",
+          "evidence": "Invalid login returned HTTP 401; payload returned HTTP 302 and a session cookie. Home page then says 'Signed in as admin' without any password.",
+          "proof_request": "POST /login  username=' OR 1=1 --&password=x",
+          "impact": "Anyone can log in as any user, including the administrator, without a password.",
+          "status": "fixed",
+          "remediation": {
+            "engine": "knowledge-base",
+            "fix": "Use parameterised queries (placeholders) instead of building SQL with string formatting. Hash passwords (bcrypt/argon2) and add rate limiting on login.",
+            "reference_patch": "row = db.execute(\n    \"SELECT id, username, role FROM users WHERE username=? AND password=?\",\n    (username, password)).fetchone()",
+            "vulnerable_code": "    @app.route(\"/login\", methods=[\"GET\", \"POST\"])\n    def login():\n        if request.method == \"GET\":\n            return shell(\"<form method='post'><input name='username'>\"\n                         \"<input name='password' type='password'><button>Login</button></form>\", \"MicroBank\", nav)\n        u, p = request.form.get(\"username\", \"\"), request.form.get(\"password\", \"\")\n        try:\n            if fixed(\"sqli_login\"):\n                row = db.execute(\"SELECT id,username,role FROM users WHERE username=? AND password=?\",\n                                 (u, p)).fetchone()\n            else:\n                row = db.execute(f\"SELECT id,username,role FROM users WHERE username='{u}' AND password='{p}'\"\n                                 ).fetchone()\n        except sqlite3.Error as e:\n            return shell(f\"<p>DB error: {html.escape(str(e))}</p>\", \"MicroBank\", nav), 500\n        if not row:\n            return shell(\"<p>Invalid credentials</p>\", \"MicroBank\", nav), 401\n        session[\"user\"] = {\"id\": row[0], \"username\": row[1], \"role\": row[2]}\n        return redirect(\"/\")"
+          },
+          "ml": {
+            "malicious": true,
+            "model": "SVM (RBF kernel)"
+          }
+        },
+        {
+          "id": "F01",
+          "vuln_type": "sqli",
+          "title": "SQL injection",
+          "severity": "high",
+          "cvss": 8.6,
+          "cwe": "CWE-89",
+          "owasp": "A03:2021 Injection",
+          "path": "/accounts",
+          "method": "GET",
+          "param": "holder",
+          "payload": "' OR 1=1 --",
+          "evidence": "Boolean proof: TRUE condition returned 349 bytes (twice, stable), FALSE condition returned 262 bytes. The database executed our logic. Rows exposed by TRUE payload: ['admin: balance hidden', 'sara: balance hidden', 'omar: balance hidden']",
+          "proof_request": "GET /accounts?holder=' OR 1=1 --",
+          "impact": "Attacker can read data they should not see (e.g. every customer in the database).",
+          "status": "fixed",
+          "remediation": {
+            "engine": "knowledge-base",
+            "fix": "Use parameterised queries; never concatenate user input into SQL. Apply least-privilege DB accounts.",
+            "reference_patch": "rows = db.execute(\n    \"SELECT username, balance FROM users WHERE username LIKE ?\",\n    (f\"%{holder}%\",)).fetchall()",
+            "vulnerable_code": "    @app.route(\"/accounts\")\n    def accounts():\n        holder = request.args.get(\"holder\", \"\")\n        try:\n            if fixed(\"sqli_search\"):\n                rows = db.execute(\"SELECT username,balance FROM users WHERE username LIKE ?\",\n                                  (f\"%{holder}%\",)).fetchall()\n            else:\n                rows = db.execute(f\"SELECT username,balance FROM users WHERE username LIKE '%{holder}%'\").fetchall()\n        except sqlite3.Error as e:\n            return shell(f\"<p>DB error: {html.escape(str(e))}</p>\", \"MicroBank\", nav), 500\n        items = \"\".join(f\"<li>{html.escape(u)}: balance hidden</li>\" for u, _ in rows)\n        return shell(f\"<p>Accounts matching {html.escape(holder)}:</p><ul>{items}</ul>\"\n                     f\"<p>{len(rows)} match(es)</p>\", \"MicroBank\", nav)"
+          },
+          "ml": {
+            "malicious": true,
+            "model": "SVM (RBF kernel)"
+          }
+        }
+      ],
+      "plan_size": 4,
+      "candidates": 4,
+      "requests_sent": 25,
+      "duration_s": 1.2,
+      "logs": [
+        "[cart] === scanning http://127.0.0.1:5001 ===",
+        "[recon] logged in with test account 'sara' to map authenticated pages",
+        "[recon] mapped 4 endpoints, 3 parameters",
+        "[planner] attack plan: 4 tests (rule-based heuristics)",
+        "[discover] discovery: 4 suspicious candidates from 4 tests",
+        "[exploit] PROVEN F01 sqli @ /accounts (sev high)",
+        "[exploit] PROVEN F02 sqli_auth_bypass @ /login (sev critical)",
+        "[remediation] wrote fixes for 2 findings",
+        "[retest] retest F02 (sqli_auth_bypass@/login): fixed OK",
+        "[retest] retest F01 (sqli@/accounts): fixed OK",
+        "[cart] === done: 2 proven findings in 1.2s, 25 requests ==="
+      ],
+      "name": "bank",
+      "title": "MicroBank",
+      "theme": "SQL injection",
+      "ground_truth": [
+        {
+          "id": "BANK-1",
+          "type": "sqli_auth_bypass",
+          "path": "/login",
+          "fix": "sqli_login"
+        },
+        {
+          "id": "BANK-2",
+          "type": "sqli",
+          "path": "/accounts",
+          "fix": "sqli_search"
+        }
+      ],
+      "score": {
+        "expected": 2,
+        "found": 2,
+        "true_positives": 2,
+        "false_positives": 0,
+        "false_negatives": 0,
+        "missed": [],
+        "false_alarms": [],
+        "detection_rate": 1.0
+      }
+    },
+    "blog": {
+      "target": "http://127.0.0.1:5002",
+      "recon": {
+        "endpoints": [
+          {
+            "path": "/",
+            "method": "GET",
+            "params": [],
+            "source": "crawl",
+            "requires_auth": false,
+            "status": 200
+          },
+          {
+            "path": "/hello",
+            "method": "GET",
+            "params": [
+              "name"
+            ],
+            "source": "crawl",
+            "requires_auth": false,
+            "status": 200
+          },
+          {
+            "path": "/search",
+            "method": "GET",
+            "params": [
+              "q"
+            ],
+            "source": "crawl",
+            "requires_auth": false,
+            "status": 200
+          }
+        ],
+        "hidden_paths": [],
+        "server": "Werkzeug/3.1.9 Python/3.12.3"
+      },
+      "findings": [
+        {
+          "id": "F01",
+          "vuln_type": "xss_reflected",
+          "title": "Reflected cross-site scripting (XSS)",
+          "severity": "medium",
+          "cvss": 6.1,
+          "cwe": "CWE-79",
+          "owasp": "A03:2021 Injection",
+          "path": "/search",
+          "method": "GET",
+          "param": "q",
+          "payload": "<cart-canary-a4eb247b>",
+          "evidence": "Canary tag <cart-canary-a4eb247b> came back UNESCAPED inside the HTML response, so the browser would parse attacker-controlled markup.",
+          "proof_request": "GET /search?q=<cart-canary-a4eb247b>",
+          "impact": "Attacker-supplied HTML/JS runs in the victim's browser (session theft, phishing).",
+          "status": "fixed",
+          "remediation": {
+            "engine": "knowledge-base",
+            "fix": "HTML-escape all user input on output (html.escape / template auto-escaping) and add a Content-Security-Policy header.",
+            "reference_patch": "shown = html.escape(q)",
+            "vulnerable_code": "    @app.route(\"/search\")\n    def search():\n        q = request.args.get(\"q\", \"\")\n        shown = html.escape(q) if fixed(\"xss_search\") else q\n        return shell(f\"<p>You searched for: {shown}</p><p>No posts found.</p>\", \"DevBlog\", nav)"
+          },
+          "ml": {
+            "malicious": true,
+            "model": "SVM (RBF kernel)"
+          }
+        }
+      ],
+      "plan_size": 5,
+      "candidates": 3,
+      "requests_sent": 16,
+      "duration_s": 0.8,
+      "logs": [
+        "[cart] === scanning http://127.0.0.1:5002 ===",
+        "[recon] mapped 3 endpoints, 2 parameters",
+        "[planner] attack plan: 5 tests (rule-based heuristics)",
+        "[discover] discovery: 3 suspicious candidates from 5 tests",
+        "[exploit] PROVEN F01 xss_reflected @ /search (sev medium)",
+        "[remediation] wrote fixes for 1 findings",
+        "[retest] retest F01 (xss_reflected@/search): fixed OK",
+        "[cart] === done: 1 proven findings in 0.8s, 16 requests ==="
+      ],
+      "name": "blog",
+      "title": "DevBlog",
+      "theme": "Cross-site scripting (XSS)",
+      "ground_truth": [
+        {
+          "id": "BLOG-1",
+          "type": "xss_reflected",
+          "path": "/search",
+          "fix": "xss_search"
+        },
+        {
+          "id": "BLOG-2",
+          "type": "xss_reflected",
+          "path": "/comment",
+          "fix": "xss_comment"
+        }
+      ],
+      "score": {
+        "expected": 2,
+        "found": 1,
+        "true_positives": 1,
+        "false_positives": 0,
+        "false_negatives": 1,
+        "missed": [
+          "xss_reflected @ /comment"
+        ],
+        "false_alarms": [],
+        "detection_rate": 0.5
+      }
+    },
+    "files": {
+      "target": "http://127.0.0.1:5003",
+      "recon": {
+        "endpoints": [
+          {
+            "path": "/",
+            "method": "GET",
+            "params": [],
+            "source": "crawl",
+            "requires_auth": false,
+            "status": 200
+          },
+          {
+            "path": "/download",
+            "method": "GET",
+            "params": [
+              "file"
+            ],
+            "source": "crawl",
+            "requires_auth": false,
+            "status": 200
+          },
+          {
+            "path": "/view",
+            "method": "GET",
+            "params": [
+              "page"
+            ],
+            "source": "crawl",
+            "requires_auth": false,
+            "status": 200
+          }
+        ],
+        "hidden_paths": [],
+        "server": "Werkzeug/3.1.9 Python/3.12.3"
+      },
+      "findings": [
+        {
+          "id": "F01",
+          "vuln_type": "path_traversal",
+          "title": "Path traversal (arbitrary file read)",
+          "severity": "high",
+          "cvss": 7.5,
+          "cwe": "CWE-22",
+          "owasp": "A01:2021 Broken Access Control",
+          "path": "/download",
+          "method": "GET",
+          "param": "file",
+          "payload": "../private/canary.txt",
+          "evidence": "Read the planted canary file outside the download folder: 'CART-CANARY-ecda8f11bab248a0'.",
+          "proof_request": "GET /download?file=../private/canary.txt",
+          "impact": "Attacker can read files outside the intended folder (configs, keys, source code).",
+          "status": "fixed",
+          "remediation": {
+            "engine": "knowledge-base",
+            "fix": "Resolve the final path and verify it stays inside the allowed base directory; prefer a whitelist of file names. Do NOT just strip '../' (bypassable with '....//').",
+            "reference_patch": "target = (FILES_DIR / name).resolve()\nif FILES_DIR.resolve() not in target.parents:\n    abort(403)",
+            "vulnerable_code": "    @app.route(\"/download\")\n    def download():\n        name = request.args.get(\"file\", \"\")\n        if fixed(\"path_traversal\"):\n            target = (files_dir / name).resolve()\n            if files_dir.resolve() not in target.parents:\n                abort(403)\n        else:\n            target = Path(os.path.join(files_dir, name))\n        if not target.is_file():\n            abort(404)\n        return target.read_text(encoding=\"utf-8\", errors=\"replace\"), 200, {\"Content-Type\": \"text/plain\"}"
+          },
+          "ml": {
+            "malicious": true,
+            "model": "SVM (RBF kernel)"
+          }
+        }
+      ],
+      "plan_size": 6,
+      "candidates": 2,
+      "requests_sent": 17,
+      "duration_s": 0.8,
+      "logs": [
+        "[cart] === scanning http://127.0.0.1:5003 ===",
+        "[recon] mapped 3 endpoints, 2 parameters",
+        "[planner] attack plan: 6 tests (rule-based heuristics)",
+        "[discover] discovery: 2 suspicious candidates from 6 tests",
+        "[exploit] PROVEN F01 path_traversal @ /download (sev high)",
+        "[remediation] wrote fixes for 1 findings",
+        "[retest] retest F01 (path_traversal@/download): fixed OK",
+        "[cart] === done: 1 proven findings in 0.8s, 17 requests ==="
+      ],
+      "name": "files",
+      "title": "CloudFiles",
+      "theme": "Path traversal",
+      "ground_truth": [
+        {
+          "id": "FILE-1",
+          "type": "path_traversal",
+          "path": "/download",
+          "fix": "path_traversal"
+        }
+      ],
+      "score": {
+        "expected": 1,
+        "found": 1,
+        "true_positives": 1,
+        "false_positives": 0,
+        "false_negatives": 0,
+        "missed": [],
+        "false_alarms": [],
+        "detection_rate": 1.0
+      }
+    },
+    "clean": {
+      "target": "http://127.0.0.1:5004",
+      "recon": {
+        "endpoints": [
+          {
+            "path": "/",
+            "method": "GET",
+            "params": [],
+            "source": "crawl",
+            "requires_auth": false,
+            "status": 200
+          },
+          {
+            "path": "/profile",
+            "method": "GET",
+            "params": [
+              "id"
+            ],
+            "source": "crawl",
+            "requires_auth": false,
+            "status": 200
+          },
+          {
+            "path": "/search",
+            "method": "GET",
+            "params": [
+              "q"
+            ],
+            "source": "crawl",
+            "requires_auth": false,
+            "status": 200
+          }
+        ],
+        "hidden_paths": [],
+        "server": "Werkzeug/3.1.9 Python/3.12.3"
+      },
+      "findings": [],
+      "plan_size": 4,
+      "candidates": 2,
+      "requests_sent": 18,
+      "duration_s": 0.9,
+      "logs": [
+        "[cart] === scanning http://127.0.0.1:5004 ===",
+        "[recon] mapped 3 endpoints, 2 parameters",
+        "[planner] attack plan: 4 tests (rule-based heuristics)",
+        "[discover] discovery: 2 suspicious candidates from 4 tests",
+        "[remediation] wrote fixes for 0 findings",
+        "[cart] === done: 0 proven findings in 0.9s, 18 requests ==="
+      ],
+      "name": "clean",
+      "title": "SecureCorp",
+      "theme": "No vulnerabilities (false-positive control)",
+      "ground_truth": [],
+      "score": {
+        "expected": 0,
+        "found": 0,
+        "true_positives": 0,
+        "false_positives": 0,
+        "false_negatives": 0,
+        "missed": [],
+        "false_alarms": [],
+        "detection_rate": null
+      }
+    }
+  },
+  "metrics": {
+    "per_target": {
+      "bank": {
+        "expected": 2,
+        "found": 2,
+        "true_positives": 2,
+        "false_positives": 0,
+        "false_negatives": 0,
+        "missed": [],
+        "false_alarms": [],
+        "detection_rate": 1.0
+      },
+      "blog": {
+        "expected": 2,
+        "found": 1,
+        "true_positives": 1,
+        "false_positives": 0,
+        "false_negatives": 1,
+        "missed": [
+          "xss_reflected @ /comment"
+        ],
+        "false_alarms": [],
+        "detection_rate": 0.5
+      },
+      "files": {
+        "expected": 1,
+        "found": 1,
+        "true_positives": 1,
+        "false_positives": 0,
+        "false_negatives": 0,
+        "missed": [],
+        "false_alarms": [],
+        "detection_rate": 1.0
+      },
+      "clean": {
+        "expected": 0,
+        "found": 0,
+        "true_positives": 0,
+        "false_positives": 0,
+        "false_negatives": 0,
+        "missed": [],
+        "false_alarms": [],
+        "detection_rate": null
+      }
+    },
+    "per_type": {
+      "path_traversal": {
+        "tp": 1,
+        "fp": 0,
+        "fn": 0,
+        "precision": 1.0,
+        "recall": 1.0,
+        "f1": 1.0
+      },
+      "sqli": {
+        "tp": 1,
+        "fp": 0,
+        "fn": 0,
+        "precision": 1.0,
+        "recall": 1.0,
+        "f1": 1.0
+      },
+      "sqli_auth_bypass": {
+        "tp": 1,
+        "fp": 0,
+        "fn": 0,
+        "precision": 1.0,
+        "recall": 1.0,
+        "f1": 1.0
+      },
+      "xss_reflected": {
+        "tp": 1,
+        "fp": 0,
+        "fn": 1,
+        "precision": 1.0,
+        "recall": 0.5,
+        "f1": 0.667
+      }
+    },
+    "overall": {
+      "tp": 4,
+      "fp": 0,
+      "fn": 1,
+      "precision": 1.0,
+      "recall": 0.8,
+      "f1": 0.889
+    }
+  },
+  "ml_check": {
+    "available": true,
+    "model": "SVM (RBF kernel)",
+    "checked": 4,
+    "flagged": 4
+  },
+  "totals": {
+    "targets": 4,
+    "findings": 4,
+    "requests": 76,
+    "fixed_on_retest": 4
+  }
+}

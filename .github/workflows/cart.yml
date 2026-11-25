@@ -1,0 +1,42 @@
+name: CART-ML
+
+# On every push: run the tests, then the full project (ML experiment + scan).
+# The scan only targets the intentionally-vulnerable lab apps that this repo
+# starts itself on localhost, so it is safe to run in CI.
+
+on:
+  push:
+  pull_request:
+  workflow_dispatch:
+
+jobs:
+  run:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+
+      - name: Install dependencies
+        run: |
+          python -m pip install --upgrade pip
+          pip install -r requirements.txt
+
+      - name: Run tests
+        run: pytest -q
+
+      - name: Run the full project (ML + scan + report)
+        run: python run.py --quiet
+
+      - name: Upload report
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: cart-ml-report
+          path: |
+            reports/report.html
+            reports/report.json
+            reports/ml/
+            reports/graphs/

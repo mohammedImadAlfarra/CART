@@ -1,0 +1,16 @@
+# CART — one-command runner (OPTIONAL).
+#
+#   docker compose up        # train the ML models + run the security scan + build the report
+#
+# Reports appear in ./reports on your machine. Deleting this file and the
+# Dockerfile does not affect `python run.py`.
+
+services:
+  cart:
+    build: .
+    image: cart-ml:latest
+    container_name: cart-ml
+    command: ["python", "run.py"]
+    volumes:
+      - ./reports:/app/reports        # see report.html + report.json on the host
+      - ./models:/app/models          # keep the trained model

@@ -1,0 +1,309 @@
+<!doctype html><html lang="en"><head><meta charset="utf-8">
+    <meta name="viewport" content="width=device-width,initial-scale=1">
+    <title>CART-ML Report</title><style>
+*{box-sizing:border-box}
+body{font-family:system-ui,Segoe UI,Arial,sans-serif;margin:0;color:#0f172a;background:#f1f5f9}
+.wrap{max-width:1100px;margin:0 auto;padding:24px}
+header{background:#0f172a;color:#fff;padding:26px 24px 0}
+header .wrap{padding:0}
+header h1{margin:0 0 6px;font-size:26px} header p{margin:2px 0;color:#cbd5e1}
+.tabbar{max-width:1100px;margin:16px auto -1px;display:flex;gap:8px;padding:0 24px}
+.tabbtn{background:#1e293b;color:#cbd5e1;border:none;padding:11px 22px;font-size:15px;font-weight:600;
+  border-radius:10px 10px 0 0;cursor:pointer}
+.tabbtn.active{background:#f1f5f9;color:#0f172a}
+.badge{display:inline-block;padding:2px 9px;border-radius:999px;color:#fff;font-size:12px;font-weight:600}
+.cards{display:flex;flex-wrap:wrap;gap:14px;margin:22px 0}
+.card{background:#fff;border-radius:12px;padding:16px 18px;flex:1;min-width:140px;box-shadow:0 1px 3px rgba(0,0,0,.08)}
+.card .n{font-size:28px;font-weight:700} .card .l{color:#64748b;font-size:13px}
+table{border-collapse:collapse;width:100%;background:#fff;border-radius:10px;overflow:hidden;margin:10px 0}
+th,td{padding:8px 11px;text-align:left;border-bottom:1px solid #e2e8f0;font-size:14px;vertical-align:top}
+th{background:#e2e8f0} tr:last-child td{border-bottom:none}
+tr.best td{background:#ecfdf5;font-weight:600}
+h2{margin:28px 0 6px} h1.section{margin:30px 0 4px;font-size:22px}
+h3{margin:18px 0 6px}
+.pill{font-size:12px;color:#334155;background:#e2e8f0;padding:1px 8px;border-radius:999px}
+.kv{color:#475569;font-size:13px;margin:3px 0}
+pre{background:#0f172a;color:#e2e8f0;padding:12px;border-radius:8px;overflow:auto;font-size:12.5px;line-height:1.45;margin:6px 0}
+img.graph{width:100%;border:1px solid #e2e8f0;border-radius:8px;background:#fff}
+.imgrow{display:flex;flex-wrap:wrap;gap:14px;margin:10px 0}
+.imgrow > div{flex:1;min-width:300px}
+.note{background:#ecfeff;border:1px solid #a5f3fc;padding:10px 14px;border-radius:8px;margin:14px 0;font-size:14px}
+.rq{background:#eef2ff;border:1px solid #c7d2fe;padding:14px 18px;border-radius:10px;margin:18px 0;font-size:15px}
+.limits{background:#fff7ed;border:1px solid #fed7aa;padding:12px 16px;border-radius:8px;margin:16px 0;font-size:14px}
+.limits h3{margin:0 0 8px}
+.model{background:#fff;border-radius:12px;padding:14px 18px;margin:12px 0;box-shadow:0 1px 3px rgba(0,0,0,.08)}
+.model h3{margin:0 0 4px}
+/* target picker */
+.picker{display:flex;flex-wrap:wrap;gap:10px;margin:14px 0 4px}
+.site-btn{background:#fff;border:1px solid #cbd5e1;border-radius:10px;padding:10px 16px;cursor:pointer;
+  font-size:14px;font-weight:600;color:#0f172a;box-shadow:0 1px 2px rgba(0,0,0,.05)}
+.site-btn .sub{display:block;font-weight:400;color:#64748b;font-size:12px;margin-top:2px}
+.site-btn.active{border-color:#0f172a;background:#0f172a;color:#fff}
+.site-btn.active .sub{color:#cbd5e1}
+.site-btn .dot{display:inline-block;width:9px;height:9px;border-radius:50%;margin-right:6px}
+.hint{color:#64748b;font-size:15px;margin:18px 0;padding:18px;border:2px dashed #cbd5e1;border-radius:12px;text-align:center}
+.site-panel{display:none;background:#fff;border-radius:12px;padding:18px 20px;margin:14px 0;box-shadow:0 1px 3px rgba(0,0,0,.08)}
+.site-panel.show{display:block}
+/* staged finding table */
+.finding{border:1px solid #e2e8f0;border-left:5px solid #94a3b8;border-radius:0 10px 10px 0;margin:14px 0;overflow:hidden}
+.finding .fhead{padding:11px 14px;background:#f8fafc;border-bottom:1px solid #e2e8f0}
+.finding .fhead h4{margin:0 0 4px;font-size:15px}
+.finding table{margin:0;border-radius:0}
+.finding th{width:150px;background:#f1f5f9;color:#0f172a;font-size:13px;white-space:nowrap}
+.stage-num{display:inline-block;width:20px;height:20px;line-height:20px;text-align:center;border-radius:50%;
+  background:#0f172a;color:#fff;font-size:12px;margin-right:7px}
+.evidence{background:#fef9c3;border:1px solid #fde047;padding:7px 10px;border-radius:6px;font-size:13px}
+code{background:#eef2f7;padding:1px 5px;border-radius:4px;font-size:12.5px}
+</style></head><body>
+    <header>
+      <div class="wrap">
+        <h1>CART-ML — Detecting malicious HTTP requests with machine learning</h1>
+        <p>Comparison of Logistic Regression, SVM and Random Forest on a real public dataset,
+          with a small security scanner as a practical application.</p>
+        <p>Generated 2026-11-22 13:09:59</p>
+      </div>
+    </header>
+    <div class="tabbar">
+      <button class="tabbtn active" id="btn-ml" onclick="showTab('ml')">Machine learning</button>
+      <button class="tabbtn" id="btn-scan" onclick="showTab('scan')">Security scan (application)</button>
+    </div>
+    <div class="wrap">
+      <div class="tabpane" id="tab-ml">
+      <div class="rq"><b>Research question.</b> Can supervised machine-learning models detect malicious HTTP request parameters (SQLi, XSS, command injection, path traversal), and which of Logistic Regression, SVM and Random Forest performs best?</div>
+      <h1 class="section">1. Dataset</h1>
+      <div class="note"><b>Real, public dataset:</b> HTTP Params Dataset (Morzeux) - benign values from CSIC 2010; MIT licence
+        · <a href="https://github.com/Morzeux/HttpParamsDataset">source</a>. Each row is one HTTP parameter value labelled
+        <b>normal</b> or <b>malicious</b>; every value is turned into 18 numeric features
+        (length, special characters, quotes, SQL/XSS/command keywords, traversal patterns, entropy ...).</div>
+      <div class="cards">
+        <div class="card"><div class="n">31,067</div><div class="l">Rows (raw)</div></div>
+        <div class="card"><div class="n">15,914</div><div class="l">Rows after cleaning</div></div>
+        <div class="card"><div class="n">4,470</div><div class="l">Normal</div></div>
+        <div class="card"><div class="n">11,444</div><div class="l">Malicious</div></div>
+        <div class="card"><div class="n">18</div><div class="l">Features</div></div>
+        <div class="card"><div class="n">11,139 / 4,775</div><div class="l">Train / test</div></div>
+      </div>
+      <h2>Data cleaning (leakage check)</h2>
+      <p class="kv">The models only see the 18 features. Two different payloads can give the exact same
+        feature vector; if one copy is in the training set and the other in the test set, the test is no
+        longer on unseen data and the score is inflated. So duplicates are removed <b>before</b> splitting.</p>
+      <table><tr><th>Step</th><th>Rows</th></tr>
+        <tr><td>Raw dataset</td><td>31,067</td></tr>
+        <tr><td>Duplicate payload strings removed</td><td>0</td></tr>
+        <tr><td>Contradictory rows removed (same features, both labels)</td><td>34</td></tr>
+        <tr><td>Duplicate feature vectors removed</td><td>15,119</td></tr>
+        <tr class="best"><td>Clean dataset used for every model</td><td>15,914</td></tr>
+      </table>
+      <h1 class="section">2. Exploratory data analysis</h1>
+      <div class="imgrow"><div><img class="graph" src="ml/class_distribution.png" alt="class distribution"></div></div>
+      <p class="kv">After cleaning, the data is imbalanced (about 72%
+        malicious). That is why we report Precision, Recall, F1 and ROC-AUC, not only Accuracy, and use a
+        <b>stratified</b> split that keeps the same ratio in train and test.</p>
+      <table><tr><th>Attack type</th><th>Rows</th><th>Share</th></tr><tr><td>sqli</td><td>10,569</td><td>66.4%</td></tr><tr><td>norm</td><td>4,470</td><td>28.1%</td></tr><tr><td>xss</td><td>529</td><td>3.3%</td></tr><tr><td>path-traversal</td><td>273</td><td>1.7%</td></tr><tr><td>cmdi</td><td>73</td><td>0.5%</td></tr></table>
+      <h2>Descriptive statistics (6 key features, clean dataset)</h2>
+      <table><tr><th>Feature</th><th>Mean</th><th>Median</th><th>Mode</th><th>Std</th>
+        <th>Mean (normal)</th><th>Mean (malicious)</th></tr><tr><td><code>length</code></td><td>71.143</td><td>51.0</td><td>20.0</td><td>65.37</td><td>21.231</td><td>90.639</td></tr><tr><td><code>n_specials</code></td><td>11.069</td><td>7.0</td><td>0.0</td><td>13.846</td><td>0.323</td><td>15.267</td></tr><tr><td><code>special_ratio</code></td><td>0.129</td><td>0.126</td><td>0.0</td><td>0.101</td><td>0.015</td><td>0.173</td></tr><tr><td><code>sql_kw</code></td><td>2.366</td><td>2.0</td><td>0.0</td><td>2.794</td><td>0.001</td><td>3.29</td></tr><tr><td><code>entropy</code></td><td>4.027</td><td>4.144</td><td>3.684</td><td>0.645</td><td>3.476</td><td>4.242</td></tr><tr><td><code>n_single_quote</code></td><td>0.85</td><td>0.0</td><td>0.0</td><td>1.509</td><td>0.008</td><td>1.179</td></tr></table>
+      <div class="imgrow"><div><img class="graph" src="ml/feature_boxplots.png" alt="feature box plots"></div></div>
+      <h1 class="section">3. Algorithms and hyperparameters</h1>
+      <p class="kv">Each model is tuned with <b>GridSearchCV</b>: every combination is scored with
+        5-fold cross-validation (F1) on the <b>training set only</b>; the test set is never used for tuning.</p>
+      
+        <div class="model"><h3>Logistic Regression</h3>
+          <p class="kv"><b>Why this algorithm:</b> Simplest linear classifier: the baseline every other model must beat. Fast, and its weights are easy to interpret.</p>
+          <table><tr><th>Hyperparameter</th><th>Values searched</th><th>Best</th><th>Meaning</th></tr><tr><td><code>C</code></td><td>0.01, 0.1, 1, 10, 100, 1000, 10000, 100000</td><td><b>10000</b></td><td>Inverse regularisation strength. Small C = simpler model (less over-fitting), large C = fits the training data more closely. Searched 0.01 to 100,000.</td></tr><tr><td><code>class_weight</code></td><td>None, balanced</td><td><b>None</b></td><td>&#x27;balanced&#x27; gives the smaller class more weight. Tested because the cleaned data is 72% malicious / 28% normal.</td></tr><tr><td><code>max_iter</code></td><td>fixed</td><td>—</td><td>2000 (fixed) so the optimiser always converges.</td></tr><tr><td><code>StandardScaler</code></td><td>fixed</td><td>—</td><td>Features are scaled to mean 0 / std 1 first, because length (~100) and ratios (0-1) live on very different scales.</td></tr></table>
+          <p class="kv">✓ Every best value lies inside the searched range.</p>
+        </div>
+        <div class="model"><h3>SVM (RBF kernel)</h3>
+          <p class="kv"><b>Why this algorithm:</b> Support Vector Machines are among the most used algorithms in web-attack detection papers. The RBF kernel draws a non-linear boundary between normal and malicious.</p>
+          <table><tr><th>Hyperparameter</th><th>Values searched</th><th>Best</th><th>Meaning</th></tr><tr><td><code>C</code></td><td>0.1, 1, 10, 100, 1000</td><td><b>100</b></td><td>Penalty for misclassified training points. Large C = fewer training errors but a risk of over-fitting. Searched 0.1 to 1000.</td></tr><tr><td><code>gamma</code></td><td>scale, 0.01, 0.1, 1, 10</td><td><b>1</b></td><td>How far the influence of one training point reaches. &#x27;scale&#x27; = 1/(n_features*var). Searched &#x27;scale&#x27;, 0.01, 0.1, 1, 10.</td></tr><tr><td><code>kernel</code></td><td>fixed</td><td>—</td><td>&#x27;rbf&#x27; (fixed): allows a curved decision boundary.</td></tr><tr><td><code>StandardScaler</code></td><td>fixed</td><td>—</td><td>Required: SVM uses distances, so unscaled features would dominate.</td></tr></table>
+          <p class="kv">✓ Every best value lies inside the searched range.</p>
+        </div>
+        <div class="model"><h3>Random Forest</h3>
+          <p class="kv"><b>Why this algorithm:</b> Many decision trees vote together. Handles non-linear patterns, needs no scaling and resists over-fitting.</p>
+          <table><tr><th>Hyperparameter</th><th>Values searched</th><th>Best</th><th>Meaning</th></tr><tr><td><code>n_estimators</code></td><td>100, 200, 400</td><td><b>200</b></td><td>Number of trees. More trees = more stable votes, slower. Searched 100/200/400.</td></tr><tr><td><code>max_depth</code></td><td>8, 16, None</td><td><b>None</b></td><td>Maximum depth of each tree. Limits how specific a tree can get (None = no limit, the natural upper end). Searched 8/16/None.</td></tr><tr><td><code>min_samples_leaf</code></td><td>1, 3</td><td><b>1</b></td><td>Minimum rows in a leaf (1 is the smallest possible). 3 smooths the trees and reduces over-fitting. Searched 1/3.</td></tr><tr><td><code>scaling</code></td><td>fixed</td><td>—</td><td>Not needed: trees split on thresholds, so feature scale does not matter.</td></tr></table>
+          <p class="kv">✓ Every best value lies inside the searched range or at a natural limit that cannot go further (max_depth, min_samples_leaf).</p>
+        </div>
+      <h1 class="section">4. Results</h1>
+      <h2>Test set (tuned models)</h2>
+      <table><tr><th>Model</th><th>Accuracy</th><th>Precision</th><th>Recall</th><th>F1</th><th>ROC-AUC</th><th>CV F1 (train)</th><th>Fit time</th></tr><tr><td>Logistic Regression</td><td>0.9962</td><td>0.9991</td><td>0.9956</td><td>0.9974</td><td>0.9998</td><td>0.9976 ± 0.0006</td><td>0.03s</td></tr><tr class="best"><td>SVM (RBF kernel) ★</td><td>0.9977</td><td>0.9994</td><td>0.9974</td><td>0.9984</td><td>0.9988</td><td>0.9984 ± 0.0005</td><td>0.76s</td></tr><tr><td>Random Forest</td><td>0.9966</td><td>0.9994</td><td>0.9959</td><td>0.9977</td><td>0.9996</td><td>0.9972 ± 0.0005</td><td>0.72s</td></tr></table>
+      <h2>Which model do we choose?</h2>
+      <div class="note">All three models reach a test F1 between 0.9974 and 0.9984, so accuracy alone does not separate them. We therefore choose by 5-fold cross-validation F1 on the training set: <b>SVM (RBF kernel)</b> (0.9984). If training speed mattered more, <b>Logistic Regression</b> trains fastest (0.03s) with almost the same score. Choosing by cross-validation rather than by the test score keeps the
+        test set a fair, untouched judge. (★ = selected model.)</div>
+      <div class="imgrow"><div><img class="graph" src="ml/model_comparison.png" alt="model comparison"></div></div>
+      <div class="imgrow"><div><img class="graph" src="ml/roc_curves.png" alt="ROC curves"></div></div>
+      <h2>Default vs tuned hyperparameters (test set F1)</h2>
+      <table><tr><th>Model</th><th>Default</th><th>Tuned</th><th>Change</th></tr><tr><td>Logistic Regression</td><td>0.9952</td><td>0.9974</td><td>+0.0022</td></tr><tr><td>SVM (RBF kernel)</td><td>0.9955</td><td>0.9984</td><td>+0.0029</td></tr><tr><td>Random Forest</td><td>0.9977</td><td>0.9977</td><td>+0.0</td></tr></table>
+      <h2>Selected model: confusion matrix</h2>
+      <p class="kv">SVM (RBF kernel) on 4,775 test rows: TP=3,425 · TN=1,339
+        · FP=2 (normal flagged as attack) · FN=9 (attack missed).</p>
+      <div class="imgrow" style="max-width:480px"><div><img class="graph" src="ml/confusion_matrix.png" alt="confusion matrix"></div></div>
+      <div class="limits"><h3>Limitations</h3>
+        <ul style="margin:0;padding-left:20px;line-height:1.6">
+          <li><b>The three models are very close.</b> Test F1 ranges from 0.9974 to 0.9984; the differences
+            are about the size of one standard deviation in cross-validation, so the ranking could change with
+            another split.</li>
+          <li><b>The dataset is an easy benchmark.</b> Attacks differ sharply from normal values (see the box
+            plots), so very high scores are expected. Results on real, messier traffic would be lower.</li>
+          <li><b>Imbalanced attack types.</b> SQL injection is 10,569 rows,
+            command injection only 73; the model learns the rare
+            types from few examples.</li>
+          <li><b>Hand-made features.</b> The 18 features encode known attack signs; a new attack style that
+            does not use them may not be detected.</li>
+        </ul>
+        <h3 style="margin-top:12px">Future work</h3>
+        <ul style="margin:0;padding-left:20px;line-height:1.6">
+          <li><b>Learned features:</b> train on the raw text (e.g. TF-IDF of character n-grams) so the model
+            learns attack patterns by itself, and compare with the 18 hand-made features.</li>
+          <li><b>ML firewall:</b> place the trained model in front of the lab websites as a web application
+            firewall (WAF) and measure how many of the scanner's attacks it blocks.</li>
+        </ul>
+      </div></div>
+      <div class="tabpane" id="tab-scan" style="display:none"><div class="note"><b>The practical application.</b> A rule-based scanner attacks 4 small local websites with the same three attack families the ML model learned (SQL injection, XSS, path traversal). A vulnerability is only reported after it is <b>proven</b> with a harmless canary; then the fix is switched on and the same proof is <b>re-tested</b>. As a small demonstration, the <b>ML check</b> row shows how the trained model classifies the attack payload.</div>
+      <div class="cards">
+        <div class="card"><div class="n">4</div><div class="l">Websites scanned</div></div>
+        <div class="card"><div class="n">4</div><div class="l">Proven findings</div></div>
+        <div class="card"><div class="n">1.0</div><div class="l">Precision</div></div>
+        <div class="card"><div class="n">0.8</div><div class="l">Recall</div></div>
+      </div><h2>Findings by website</h2><div class="picker"><button class="site-btn" id="btn-site-bank" onclick="showSite('bank')"><span class="dot" style="background:#b91c1c"></span>MicroBank<span class="sub">SQL injection · 2 finding(s)</span></button><button class="site-btn" id="btn-site-blog" onclick="showSite('blog')"><span class="dot" style="background:#ea580c"></span>DevBlog<span class="sub">Cross-site scripting (XSS) · 1 finding(s)</span></button><button class="site-btn" id="btn-site-files" onclick="showSite('files')"><span class="dot" style="background:#ea580c"></span>CloudFiles<span class="sub">Path traversal · 1 finding(s)</span></button><button class="site-btn" id="btn-site-clean" onclick="showSite('clean')"><span class="dot" style="background:#16a34a"></span>SecureCorp<span class="sub">No vulnerabilities (false-positive control) · clean (control)</span></button></div><div class="hint" id="site-hint">Select a website above to view its findings.</div>
+    <section class="site-panel" id="site-bank">
+      <h2>MicroBank <span class="pill">SQL injection</span></h2>
+      <div class="kv">http://127.0.0.1:5001 · detected 2/2 known vulns · 0 false positive(s) · 25 requests · 1.2s</div>
+      <img class="graph" src="graphs/bank.png" alt="attack graph for MicroBank">
+      <div class="findings-list">
+    <div class="finding" data-type="sqli_auth_bypass" style="border-left-color:#b91c1c">
+      <div class="fhead"><h4>F02 — SQL injection in login form (authentication bypass)</h4><span class="badge" style="background:#b91c1c">CRITICAL · CVSS 9.8</span> <span class="badge" style="background:#16a34a">fixed on retest</span></div>
+      <table>
+        <tr><th><span class="stage-num">1</span>Discover</th><td>POST <code>/login</code> · param <code>username</code><div class="kv">Probe payload: <code>&#x27; OR 1=1 --</code></div></td></tr>
+        <tr><th><span class="stage-num">2</span>Prove</th><td><div class="evidence"><b>Proof:</b> Invalid login returned HTTP 401; payload returned HTTP 302 and a session cookie. Home page then says &#x27;Signed in as admin&#x27; without any password.</div><div class="kv"><b>Reproduce:</b> <code>POST /login  username=&#x27; OR 1=1 --&amp;password=x</code></div></td></tr>
+        <tr><th><span class="stage-num">3</span>Impact</th><td>Anyone can log in as any user, including the administrator, without a password.<div class="kv">CWE-89 · A03:2021 Injection</div></td></tr>
+        <tr><th><span class="stage-num">4</span>Remediate</th><td><span class="pill">knowledge-base</span> Use parameterised queries (placeholders) instead of building SQL with string formatting. Hash passwords (bcrypt/argon2) and add rate limiting on login.<div class="kv" style="margin-top:6px"><b>Vulnerable code:</b></div><pre>    @app.route(&quot;/login&quot;, methods=[&quot;GET&quot;, &quot;POST&quot;])
+    def login():
+        if request.method == &quot;GET&quot;:
+            return shell(&quot;&lt;form method=&#x27;post&#x27;&gt;&lt;input name=&#x27;username&#x27;&gt;&quot;
+                         &quot;&lt;input name=&#x27;password&#x27; type=&#x27;password&#x27;&gt;&lt;button&gt;Login&lt;/button&gt;&lt;/form&gt;&quot;, &quot;MicroBank&quot;, nav)
+        u, p = request.form.get(&quot;username&quot;, &quot;&quot;), request.form.get(&quot;password&quot;, &quot;&quot;)
+        try:
+            if fixed(&quot;sqli_login&quot;):
+                row = db.execute(&quot;SELECT id,username,role FROM users WHERE username=? AND password=?&quot;,
+                                 (u, p)).fetchone()
+            else:
+                row = db.execute(f&quot;SELECT id,username,role FROM users WHERE username=&#x27;{u}&#x27; AND password=&#x27;{p}&#x27;&quot;
+                                 ).fetchone()
+        except sqlite3.Error as e:
+            return shell(f&quot;&lt;p&gt;DB error: {html.escape(str(e))}&lt;/p&gt;&quot;, &quot;MicroBank&quot;, nav), 500
+        if not row:
+            return shell(&quot;&lt;p&gt;Invalid credentials&lt;/p&gt;&quot;, &quot;MicroBank&quot;, nav), 401
+        session[&quot;user&quot;] = {&quot;id&quot;: row[0], &quot;username&quot;: row[1], &quot;role&quot;: row[2]}
+        return redirect(&quot;/&quot;)</pre><div class="kv"><b>Recommended patch:</b></div><pre>row = db.execute(
+    &quot;SELECT id, username, role FROM users WHERE username=? AND password=?&quot;,
+    (username, password)).fetchone()</pre></td></tr>
+        <tr><th><span class="stage-num">5</span>Retest</th><td><span class="badge" style="background:#16a34a">fixed on retest</span></td></tr>
+        <tr><th><span class="stage-num">6</span>ML check</th><td><span class="pill">demo</span> The trained SVM (RBF kernel) classifies the payload <code>&#x27; OR 1=1 --</code> as <b style='color:#b91c1c'>malicious</b>.</td></tr>
+      </table>
+    </div>
+    <div class="finding" data-type="sqli" style="border-left-color:#ea580c">
+      <div class="fhead"><h4>F01 — SQL injection</h4><span class="badge" style="background:#ea580c">HIGH · CVSS 8.6</span> <span class="badge" style="background:#16a34a">fixed on retest</span></div>
+      <table>
+        <tr><th><span class="stage-num">1</span>Discover</th><td>GET <code>/accounts</code> · param <code>holder</code><div class="kv">Probe payload: <code>&#x27; OR 1=1 --</code></div></td></tr>
+        <tr><th><span class="stage-num">2</span>Prove</th><td><div class="evidence"><b>Proof:</b> Boolean proof: TRUE condition returned 349 bytes (twice, stable), FALSE condition returned 262 bytes. The database executed our logic. Rows exposed by TRUE payload: [&#x27;admin: balance hidden&#x27;, &#x27;sara: balance hidden&#x27;, &#x27;omar: balance hidden&#x27;]</div><div class="kv"><b>Reproduce:</b> <code>GET /accounts?holder=&#x27; OR 1=1 --</code></div></td></tr>
+        <tr><th><span class="stage-num">3</span>Impact</th><td>Attacker can read data they should not see (e.g. every customer in the database).<div class="kv">CWE-89 · A03:2021 Injection</div></td></tr>
+        <tr><th><span class="stage-num">4</span>Remediate</th><td><span class="pill">knowledge-base</span> Use parameterised queries; never concatenate user input into SQL. Apply least-privilege DB accounts.<div class="kv" style="margin-top:6px"><b>Vulnerable code:</b></div><pre>    @app.route(&quot;/accounts&quot;)
+    def accounts():
+        holder = request.args.get(&quot;holder&quot;, &quot;&quot;)
+        try:
+            if fixed(&quot;sqli_search&quot;):
+                rows = db.execute(&quot;SELECT username,balance FROM users WHERE username LIKE ?&quot;,
+                                  (f&quot;%{holder}%&quot;,)).fetchall()
+            else:
+                rows = db.execute(f&quot;SELECT username,balance FROM users WHERE username LIKE &#x27;%{holder}%&#x27;&quot;).fetchall()
+        except sqlite3.Error as e:
+            return shell(f&quot;&lt;p&gt;DB error: {html.escape(str(e))}&lt;/p&gt;&quot;, &quot;MicroBank&quot;, nav), 500
+        items = &quot;&quot;.join(f&quot;&lt;li&gt;{html.escape(u)}: balance hidden&lt;/li&gt;&quot; for u, _ in rows)
+        return shell(f&quot;&lt;p&gt;Accounts matching {html.escape(holder)}:&lt;/p&gt;&lt;ul&gt;{items}&lt;/ul&gt;&quot;
+                     f&quot;&lt;p&gt;{len(rows)} match(es)&lt;/p&gt;&quot;, &quot;MicroBank&quot;, nav)</pre><div class="kv"><b>Recommended patch:</b></div><pre>rows = db.execute(
+    &quot;SELECT username, balance FROM users WHERE username LIKE ?&quot;,
+    (f&quot;%{holder}%&quot;,)).fetchall()</pre></td></tr>
+        <tr><th><span class="stage-num">5</span>Retest</th><td><span class="badge" style="background:#16a34a">fixed on retest</span></td></tr>
+        <tr><th><span class="stage-num">6</span>ML check</th><td><span class="pill">demo</span> The trained SVM (RBF kernel) classifies the payload <code>&#x27; OR 1=1 --</code> as <b style='color:#b91c1c'>malicious</b>.</td></tr>
+      </table>
+    </div></div>
+    </section>
+    <section class="site-panel" id="site-blog">
+      <h2>DevBlog <span class="pill">Cross-site scripting (XSS)</span></h2>
+      <div class="kv">http://127.0.0.1:5002 · detected 1/2 known vulns · 0 false positive(s) · missed: xss_reflected @ /comment · 16 requests · 0.8s</div>
+      <img class="graph" src="graphs/blog.png" alt="attack graph for DevBlog">
+      <div class="findings-list">
+    <div class="finding" data-type="xss_reflected" style="border-left-color:#ca8a04">
+      <div class="fhead"><h4>F01 — Reflected cross-site scripting (XSS)</h4><span class="badge" style="background:#ca8a04">MEDIUM · CVSS 6.1</span> <span class="badge" style="background:#16a34a">fixed on retest</span></div>
+      <table>
+        <tr><th><span class="stage-num">1</span>Discover</th><td>GET <code>/search</code> · param <code>q</code><div class="kv">Probe payload: <code>&lt;cart-canary-a4eb247b&gt;</code></div></td></tr>
+        <tr><th><span class="stage-num">2</span>Prove</th><td><div class="evidence"><b>Proof:</b> Canary tag &lt;cart-canary-a4eb247b&gt; came back UNESCAPED inside the HTML response, so the browser would parse attacker-controlled markup.</div><div class="kv"><b>Reproduce:</b> <code>GET /search?q=&lt;cart-canary-a4eb247b&gt;</code></div></td></tr>
+        <tr><th><span class="stage-num">3</span>Impact</th><td>Attacker-supplied HTML/JS runs in the victim&#x27;s browser (session theft, phishing).<div class="kv">CWE-79 · A03:2021 Injection</div></td></tr>
+        <tr><th><span class="stage-num">4</span>Remediate</th><td><span class="pill">knowledge-base</span> HTML-escape all user input on output (html.escape / template auto-escaping) and add a Content-Security-Policy header.<div class="kv" style="margin-top:6px"><b>Vulnerable code:</b></div><pre>    @app.route(&quot;/search&quot;)
+    def search():
+        q = request.args.get(&quot;q&quot;, &quot;&quot;)
+        shown = html.escape(q) if fixed(&quot;xss_search&quot;) else q
+        return shell(f&quot;&lt;p&gt;You searched for: {shown}&lt;/p&gt;&lt;p&gt;No posts found.&lt;/p&gt;&quot;, &quot;DevBlog&quot;, nav)</pre><div class="kv"><b>Recommended patch:</b></div><pre>shown = html.escape(q)</pre></td></tr>
+        <tr><th><span class="stage-num">5</span>Retest</th><td><span class="badge" style="background:#16a34a">fixed on retest</span></td></tr>
+        <tr><th><span class="stage-num">6</span>ML check</th><td><span class="pill">demo</span> The trained SVM (RBF kernel) classifies the payload <code>&lt;cart-canary-a4eb247b&gt;</code> as <b style='color:#b91c1c'>malicious</b>.</td></tr>
+      </table>
+    </div></div>
+    </section>
+    <section class="site-panel" id="site-files">
+      <h2>CloudFiles <span class="pill">Path traversal</span></h2>
+      <div class="kv">http://127.0.0.1:5003 · detected 1/1 known vulns · 0 false positive(s) · 17 requests · 0.8s</div>
+      <img class="graph" src="graphs/files.png" alt="attack graph for CloudFiles">
+      <div class="findings-list">
+    <div class="finding" data-type="path_traversal" style="border-left-color:#ea580c">
+      <div class="fhead"><h4>F01 — Path traversal (arbitrary file read)</h4><span class="badge" style="background:#ea580c">HIGH · CVSS 7.5</span> <span class="badge" style="background:#16a34a">fixed on retest</span></div>
+      <table>
+        <tr><th><span class="stage-num">1</span>Discover</th><td>GET <code>/download</code> · param <code>file</code><div class="kv">Probe payload: <code>../private/canary.txt</code></div></td></tr>
+        <tr><th><span class="stage-num">2</span>Prove</th><td><div class="evidence"><b>Proof:</b> Read the planted canary file outside the download folder: &#x27;CART-CANARY-ecda8f11bab248a0&#x27;.</div><div class="kv"><b>Reproduce:</b> <code>GET /download?file=../private/canary.txt</code></div></td></tr>
+        <tr><th><span class="stage-num">3</span>Impact</th><td>Attacker can read files outside the intended folder (configs, keys, source code).<div class="kv">CWE-22 · A01:2021 Broken Access Control</div></td></tr>
+        <tr><th><span class="stage-num">4</span>Remediate</th><td><span class="pill">knowledge-base</span> Resolve the final path and verify it stays inside the allowed base directory; prefer a whitelist of file names. Do NOT just strip &#x27;../&#x27; (bypassable with &#x27;....//&#x27;).<div class="kv" style="margin-top:6px"><b>Vulnerable code:</b></div><pre>    @app.route(&quot;/download&quot;)
+    def download():
+        name = request.args.get(&quot;file&quot;, &quot;&quot;)
+        if fixed(&quot;path_traversal&quot;):
+            target = (files_dir / name).resolve()
+            if files_dir.resolve() not in target.parents:
+                abort(403)
+        else:
+            target = Path(os.path.join(files_dir, name))
+        if not target.is_file():
+            abort(404)
+        return target.read_text(encoding=&quot;utf-8&quot;, errors=&quot;replace&quot;), 200, {&quot;Content-Type&quot;: &quot;text/plain&quot;}</pre><div class="kv"><b>Recommended patch:</b></div><pre>target = (FILES_DIR / name).resolve()
+if FILES_DIR.resolve() not in target.parents:
+    abort(403)</pre></td></tr>
+        <tr><th><span class="stage-num">5</span>Retest</th><td><span class="badge" style="background:#16a34a">fixed on retest</span></td></tr>
+        <tr><th><span class="stage-num">6</span>ML check</th><td><span class="pill">demo</span> The trained SVM (RBF kernel) classifies the payload <code>../private/canary.txt</code> as <b style='color:#b91c1c'>malicious</b>.</td></tr>
+      </table>
+    </div></div>
+    </section>
+    <section class="site-panel" id="site-clean">
+      <h2>SecureCorp <span class="pill">No vulnerabilities (false-positive control)</span></h2>
+      <div class="kv">http://127.0.0.1:5004 · 0 false positive(s) (control site) · 18 requests · 0.9s</div>
+      <img class="graph" src="graphs/clean.png" alt="attack graph for SecureCorp">
+      <div class="findings-list"><p>No findings (clean target).</p></div>
+    </section></div>
+      <p class="kv" style="margin-top:30px">Educational project. Lab websites are intentionally
+        vulnerable and run on localhost only.</p>
+    </div>
+    <script>
+function showTab(t){
+  document.querySelectorAll('.tabpane').forEach(function(p){p.style.display='none';});
+  document.querySelectorAll('.tabbtn').forEach(function(b){b.classList.remove('active');});
+  document.getElementById('tab-'+t).style.display='block';
+  document.getElementById('btn-'+t).classList.add('active');
+}
+function showSite(name){
+  document.querySelectorAll('.site-panel').forEach(function(p){p.classList.remove('show');});
+  document.querySelectorAll('.site-btn').forEach(function(b){b.classList.remove('active');});
+  var panel=document.getElementById('site-'+name);
+  if(panel){panel.classList.add('show');}
+  var btn=document.getElementById('btn-site-'+name);
+  if(btn){btn.classList.add('active');}
+  var hint=document.getElementById('site-hint');
+  if(hint){hint.style.display='none';}
+}
+</script>
+    </body></html>
